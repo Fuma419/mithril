@@ -13,6 +13,7 @@ mod message_adapters;
 pub mod metrics;
 mod runtime;
 pub mod services;
+mod signature_publisher;
 pub mod store;
 
 pub use configuration::{Configuration, DefaultConfiguration};
@@ -21,6 +22,7 @@ pub use message_adapters::{
 };
 pub use metrics::*;
 pub use runtime::*;
+pub use signature_publisher::*;
 
 /// HTTP request timeout duration in milliseconds
 const HTTP_REQUEST_TIMEOUT_DURATION: u64 = 30000;

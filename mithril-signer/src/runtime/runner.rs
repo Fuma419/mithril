@@ -399,8 +399,8 @@ impl Runner for SignerRunner {
             debug!(" > there is a single signature to send");
 
             self.services
-                .certificate_handler
-                .register_signatures(signed_entity_type, &single_signatures, protocol_message)
+                .signature_publisher
+                .publish(signed_entity_type, &single_signatures, protocol_message)
                 .await?;
 
             Ok(())
@@ -476,16 +476,15 @@ mod tests {
     use rand_core::SeedableRng;
 
     use std::{path::Path, path::PathBuf, sync::Arc};
+    use tokio::sync::RwLock;
 
     use crate::metrics::MetricsService;
     use crate::services::{
         CardanoTransactionsImporter, DumbAggregatorClient, MithrilEpochService,
-        MithrilSingleSigner, MockAggregatorClient, MockTransactionStore, MockUpkeepService,
-        SingleSigner,
+        MithrilSingleSigner, MockTransactionStore, MockUpkeepService, SingleSigner,
     };
     use crate::store::ProtocolInitializerStore;
-
-    use tokio::sync::RwLock;
+    use crate::{AggregatorHttpSignaturePublisher, MockSignaturePublisher};
 
     use super::*;
 
@@ -637,10 +636,14 @@ mod tests {
         ));
         let upkeep_service = Arc::new(MockUpkeepService::new());
         let epoch_service = Arc::new(RwLock::new(MithrilEpochService::new(stake_store.clone())));
+        let certificate_handler = Arc::new(DumbAggregatorClient::default());
 
         SignerDependencyContainer {
             stake_store,
-            certificate_handler: Arc::new(DumbAggregatorClient::default()),
+            signature_publisher: Arc::new(AggregatorHttpSignaturePublisher::new(
+                certificate_handler.clone(),
+            )),
+            certificate_handler,
             chain_observer,
             digester,
             single_signer: Arc::new(MithrilSingleSigner::new(party_id)),
@@ -1045,12 +1048,12 @@ mod tests {
     #[tokio::test]
     async fn test_send_single_signature() {
         let mut services = init_services().await;
-        let mut certificate_handler = MockAggregatorClient::new();
-        certificate_handler
-            .expect_register_signatures()
+        let mut signature_publisher = MockSignaturePublisher::new();
+        signature_publisher
+            .expect_publish()
             .once()
             .returning(|_, _, _| Ok(()));
-        services.certificate_handler = Arc::new(certificate_handler);
+        services.signature_publisher = Arc::new(signature_publisher);
         let runner = init_runner(Some(services), None).await;
 
         runner
