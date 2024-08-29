@@ -31,12 +31,11 @@ use mithril_signer::{
     dependency_injection::{DependenciesBuilder, SignerDependencyContainer},
     metrics::*,
     services::{
-        AggregatorClient, CardanoTransactionsImporter, MithrilEpochService, MithrilSingleSigner,
-        SignerUpkeepService,
+        AggregatorClient, AggregatorHttpSignaturePublisher, CardanoTransactionsImporter,
+        MithrilEpochService, MithrilSingleSigner, SignerUpkeepService,
     },
     store::{MKTreeStoreSqlite, ProtocolInitializerStore, ProtocolInitializerStorer},
-    AggregatorHttpSignaturePublisher, Configuration, MetricsService, RuntimeError, SignerRunner,
-    SignerState, StateMachine,
+    Configuration, MetricsService, RuntimeError, SignerRunner, SignerState, StateMachine,
 };
 use prometheus_parse::Value;
 use slog::Drain;
